@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from datetime import date
 
-base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/o2o/"
+base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../data/o2o/"
 
 def load_data():
     """打开数据集"""

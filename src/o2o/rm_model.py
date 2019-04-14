@@ -14,6 +14,7 @@ def train(train_data, valid_data):
     y_valid_pred = random_forest.predict_proba(valid_data[original_feature])
     valid = valid_data.copy()
     valid['pred_prob'] = y_valid_pred[:, 1]
+    print(y_valid_pred)
     calculation_auc(valid)
 
 def calculation_auc(valid):
