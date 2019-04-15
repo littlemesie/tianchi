@@ -19,7 +19,7 @@ def train(train_data, valid_data):
                         'weekday_type']
     dtrain = xgb.DMatrix(train_data[original_feature], train_data['label'])
     dtest = xgb.DMatrix(valid_data[original_feature])
-    test_label = train_data['label']
+    test_label = np.array(valid_data['label'])
     params = {'booster': 'gbtree',
               'objective': 'rank:pairwise',
               'eval_metric': 'auc',
@@ -38,9 +38,10 @@ def train(train_data, valid_data):
 
     watchlist = [(dtrain, 'train')]
     model = xgb.train(params, dtrain, num_boost_round=100, evals=watchlist)
-    prob = list(model.predict(dtest))
-    print(prob)
-    print(np.average(prob))
+    prob = np.array(model.predict(dtest))
+    fpr, tpr, thresholds = roc_curve(test_label, prob)
+    aucs = auc(fpr, tpr)
+    print(aucs)
 
 
 if __name__ == '__main__':
