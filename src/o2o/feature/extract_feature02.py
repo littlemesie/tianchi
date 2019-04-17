@@ -1,11 +1,13 @@
+import os
 import pandas as pd
 import numpy as np
 from datetime import date
+
 # 参考https://github.com/wepe/O2O-Coupon-Usage-Forecast
 
 """
 dataset split:
-                      (date_received)                              
+            (date_received)                              
            dateset3: 20160701~20160731 (113640),features3 from 20160315~20160630  (off_test)
            dateset2: 20160515~20160615 (258446),features2 from 20160201~20160514  
            dateset1: 20160414~20160514 (138303),features1 from 20160101~20160413        
@@ -43,21 +45,24 @@ dataset split:
       this_day_user_receive_same_coupon_count
       day_gap_before, day_gap_after  (receive the same coupon)
 """
+base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../data/o2o/"
 
 # 1754884 record,1053282 with coupon_id,9738 coupon. date_received:20160101~20160615,date:20160101~20160630, 539438 users, 8415 merchants
-off_train = pd.read_csv('data/ccf_offline_stage1_train.csv', header=None)
+off_train = pd.read_csv(base_path + 'ccf_offline_stage1_train.csv', keep_default_na=False)
 off_train.columns = ['user_id', 'merchant_id', 'coupon_id', 'discount_rate', 'distance', 'date_received', 'date']
 # 2050 coupon_id. date_received:20160701~20160731, 76309 users(76307 in trainset, 35965 in online_trainset), 1559 merchants(1558 in trainset)
-off_test = pd.read_csv('data/ccf_offline_stage1_test_revised.csv', header=None)
+off_test = pd.read_csv(base_path + 'ccf_offline_stage1_test_revised.csv', keep_default_na=False)
 off_test.columns = ['user_id', 'merchant_id', 'coupon_id', 'discount_rate', 'distance', 'date_received']
 # 11429826 record(872357 with coupon_id),762858 user(267448 in off_train)
-on_train = pd.read_csv('data/ccf_online_stage1_train.csv', header=None)
-on_train.columns = ['user_id', 'merchant_id', 'action', 'coupon_id', 'discount_rate', 'date_received', 'date']
+# on_train = pd.read_csv(base_path + 'data/ccf_online_stage1_train.csv', header=None)
+# on_train.columns = ['user_id', 'merchant_id', 'action', 'coupon_id', 'discount_rate', 'date_received', 'date']
 
 dataset3 = off_test
-feature3 = off_train[((off_train.date >= '20160315') & (off_train.date <= '20160630')) | (
-            (off_train.date == 'null') & (off_train.date_received >= '20160315') & (
-                off_train.date_received <= '20160630'))]
+feature3 = off_train[
+                    ((off_train.date >= '20160315') & (off_train.date <= '20160630')) |
+                    ((off_train.date == 'null') & (off_train.date_received >= '20160315') &
+                     (off_train.date_received <= '20160630'))
+                    ]
 dataset2 = off_train[(off_train.date_received >= '20160515') & (off_train.date_received <= '20160615')]
 feature2 = off_train[(off_train.date >= '20160201') & (off_train.date <= '20160514') | (
             (off_train.date == 'null') & (off_train.date_received >= '20160201') & (
@@ -175,7 +180,7 @@ other_feature3 = pd.merge(other_feature3, t3, on=['user_id', 'coupon_id'])
 other_feature3 = pd.merge(other_feature3, t4, on=['user_id', 'date_received'])
 other_feature3 = pd.merge(other_feature3, t5, on=['user_id', 'coupon_id', 'date_received'])
 other_feature3 = pd.merge(other_feature3, t7, on=['user_id', 'coupon_id', 'date_received'])
-other_feature3.to_csv('data/other_feature3.csv', index=None)
+other_feature3.to_csv(base_path + 'data/other_feature3.csv', index=None)
 print(other_feature3.shape)
 
 # for dataset2
@@ -274,9 +279,8 @@ other_feature2 = pd.merge(other_feature2, t3, on=['user_id', 'coupon_id'])
 other_feature2 = pd.merge(other_feature2, t4, on=['user_id', 'date_received'])
 other_feature2 = pd.merge(other_feature2, t5, on=['user_id', 'coupon_id', 'date_received'])
 other_feature2 = pd.merge(other_feature2, t7, on=['user_id', 'coupon_id', 'date_received'])
-other_feature2.to_csv('data/other_feature2.csv', index=None)
-print
-other_feature2.shape
+other_feature2.to_csv(base_path + 'data/other_feature2.csv', index=None)
+print(other_feature2.shape)
 
 # for dataset1
 t = dataset1[['user_id']]
@@ -374,9 +378,8 @@ other_feature1 = pd.merge(other_feature1, t3, on=['user_id', 'coupon_id'])
 other_feature1 = pd.merge(other_feature1, t4, on=['user_id', 'date_received'])
 other_feature1 = pd.merge(other_feature1, t5, on=['user_id', 'coupon_id', 'date_received'])
 other_feature1 = pd.merge(other_feature1, t7, on=['user_id', 'coupon_id', 'date_received'])
-other_feature1.to_csv('data/other_feature1.csv', index=None)
-print
-other_feature1.shape
+other_feature1.to_csv(base_path + 'data/other_feature1.csv', index=None)
+print(other_feature1.shape)
 
 ############# coupon related feature   #############
 """
@@ -436,7 +439,7 @@ d = dataset3[['coupon_id']]
 d['coupon_count'] = 1
 d = d.groupby('coupon_id').agg('sum').reset_index()
 dataset3 = pd.merge(dataset3, d, on='coupon_id', how='left')
-dataset3.to_csv('data/coupon3_feature.csv', index=None)
+dataset3.to_csv(base_path + 'data/coupon3_feature.csv', index=None)
 # dataset2
 dataset2['day_of_week'] = dataset2.date_received.astype('str').apply(
     lambda x: date(int(x[0:4]), int(x[4:6]), int(x[6:8])).weekday() + 1)
@@ -451,7 +454,7 @@ d = dataset2[['coupon_id']]
 d['coupon_count'] = 1
 d = d.groupby('coupon_id').agg('sum').reset_index()
 dataset2 = pd.merge(dataset2, d, on='coupon_id', how='left')
-dataset2.to_csv('data/coupon2_feature.csv', index=None)
+dataset2.to_csv(base_path + 'data/coupon2_feature.csv', index=None)
 # dataset1
 dataset1['day_of_week'] = dataset1.date_received.astype('str').apply(
     lambda x: date(int(x[0:4]), int(x[4:6]), int(x[6:8])).weekday() + 1)
@@ -466,7 +469,7 @@ d = dataset1[['coupon_id']]
 d['coupon_count'] = 1
 d = d.groupby('coupon_id').agg('sum').reset_index()
 dataset1 = pd.merge(dataset1, d, on='coupon_id', how='left')
-dataset1.to_csv('data/coupon1_feature.csv', index=None)
+dataset1.to_csv(base_path + 'data/coupon1_feature.csv', index=None)
 
 ############# merchant related feature   #############
 """
@@ -524,7 +527,7 @@ merchant3_feature['merchant_coupon_transfer_rate'] = merchant3_feature.sales_use
     'float') / merchant3_feature.total_coupon
 merchant3_feature['coupon_rate'] = merchant3_feature.sales_use_coupon.astype('float') / merchant3_feature.total_sales
 merchant3_feature.total_coupon = merchant3_feature.total_coupon.replace(np.nan, 0)  # fillna with 0
-merchant3_feature.to_csv('data/merchant3_feature.csv', index=None)
+merchant3_feature.to_csv(base_path + 'data/merchant3_feature.csv', index=None)
 
 # for dataset2
 merchant2 = feature2[['merchant_id', 'coupon_id', 'distance', 'date_received', 'date']]
@@ -572,7 +575,7 @@ merchant2_feature['merchant_coupon_transfer_rate'] = merchant2_feature.sales_use
     'float') / merchant2_feature.total_coupon
 merchant2_feature['coupon_rate'] = merchant2_feature.sales_use_coupon.astype('float') / merchant2_feature.total_sales
 merchant2_feature.total_coupon = merchant2_feature.total_coupon.replace(np.nan, 0)  # fillna with 0
-merchant2_feature.to_csv('data/merchant2_feature.csv', index=None)
+merchant2_feature.to_csv(base_path + 'data/merchant2_feature.csv', index=None)
 
 # for dataset1
 merchant1 = feature1[['merchant_id', 'coupon_id', 'distance', 'date_received', 'date']]
@@ -620,7 +623,7 @@ merchant1_feature['merchant_coupon_transfer_rate'] = merchant1_feature.sales_use
     'float') / merchant1_feature.total_coupon
 merchant1_feature['coupon_rate'] = merchant1_feature.sales_use_coupon.astype('float') / merchant1_feature.total_sales
 merchant1_feature.total_coupon = merchant1_feature.total_coupon.replace(np.nan, 0)  # fillna with 0
-merchant1_feature.to_csv('data/merchant1_feature.csv', index=None)
+merchant1_feature.to_csv(base_path + 'data/merchant1_feature.csv', index=None)
 
 ############# user related feature   #############
 """
@@ -713,7 +716,7 @@ user3_feature['user_coupon_transfer_rate'] = user3_feature.buy_use_coupon.astype
     'float') / user3_feature.coupon_received.astype('float')
 user3_feature.buy_total = user3_feature.buy_total.replace(np.nan, 0)
 user3_feature.coupon_received = user3_feature.coupon_received.replace(np.nan, 0)
-user3_feature.to_csv('data/user3_feature.csv', index=None)
+user3_feature.to_csv(base_path + 'data/user3_feature.csv', index=None)
 
 # for dataset2
 user2 = feature2[['user_id', 'merchant_id', 'coupon_id', 'discount_rate', 'distance', 'date_received', 'date']]
@@ -786,7 +789,7 @@ user2_feature['user_coupon_transfer_rate'] = user2_feature.buy_use_coupon.astype
     'float') / user2_feature.coupon_received.astype('float')
 user2_feature.buy_total = user2_feature.buy_total.replace(np.nan, 0)
 user2_feature.coupon_received = user2_feature.coupon_received.replace(np.nan, 0)
-user2_feature.to_csv('data/user2_feature.csv', index=None)
+user2_feature.to_csv(base_path + 'data/user2_feature.csv', index=None)
 
 # for dataset1
 user1 = feature1[['user_id', 'merchant_id', 'coupon_id', 'discount_rate', 'distance', 'date_received', 'date']]
@@ -859,7 +862,7 @@ user1_feature['user_coupon_transfer_rate'] = user1_feature.buy_use_coupon.astype
     'float') / user1_feature.coupon_received.astype('float')
 user1_feature.buy_total = user1_feature.buy_total.replace(np.nan, 0)
 user1_feature.coupon_received = user1_feature.coupon_received.replace(np.nan, 0)
-user1_feature.to_csv('data/user1_feature.csv', index=None)
+user1_feature.to_csv(base_path + 'data/user1_feature.csv', index=None)
 
 ##################  user_merchant related feature #########################
 
@@ -915,7 +918,7 @@ user_merchant3['user_merchant_rate'] = user_merchant3.user_merchant_buy_total.as
     'float') / user_merchant3.user_merchant_any.astype('float')
 user_merchant3['user_merchant_common_buy_rate'] = user_merchant3.user_merchant_buy_common.astype(
     'float') / user_merchant3.user_merchant_buy_total.astype('float')
-user_merchant3.to_csv('data/user_merchant3.csv', index=None)
+user_merchant3.to_csv(base_path + 'data/user_merchant3.csv', index=None)
 
 # for dataset2
 all_user_merchant = feature2[['user_id', 'merchant_id']]
@@ -965,7 +968,7 @@ user_merchant2['user_merchant_rate'] = user_merchant2.user_merchant_buy_total.as
     'float') / user_merchant2.user_merchant_any.astype('float')
 user_merchant2['user_merchant_common_buy_rate'] = user_merchant2.user_merchant_buy_common.astype(
     'float') / user_merchant2.user_merchant_buy_total.astype('float')
-user_merchant2.to_csv('data/user_merchant2.csv', index=None)
+user_merchant2.to_csv(base_path + 'data/user_merchant2.csv', index=None)
 
 # for dataset2
 all_user_merchant = feature1[['user_id', 'merchant_id']]
@@ -1015,13 +1018,13 @@ user_merchant1['user_merchant_rate'] = user_merchant1.user_merchant_buy_total.as
     'float') / user_merchant1.user_merchant_any.astype('float')
 user_merchant1['user_merchant_common_buy_rate'] = user_merchant1.user_merchant_buy_common.astype(
     'float') / user_merchant1.user_merchant_buy_total.astype('float')
-user_merchant1.to_csv('data/user_merchant1.csv', index=None)
+user_merchant1.to_csv(base_path + 'data/user_merchant1.csv', index=None)
 
 
 ##################  generate training and testing set ################
 def get_label(s):
     s = s.split(':')
-    if s[0] == 'null':
+    if s[0] == 'null' or s[0] == 'nan':
         return 0
     elif (date(int(s[0][0:4]), int(s[0][4:6]), int(s[0][6:8])) - date(int(s[1][0:4]), int(s[1][4:6]),
                                                                       int(s[1][6:8]))).days <= 15:
@@ -1030,11 +1033,11 @@ def get_label(s):
         return -1
 
 
-coupon3 = pd.read_csv('data/coupon3_feature.csv')
-merchant3 = pd.read_csv('data/merchant3_feature.csv')
-user3 = pd.read_csv('data/user3_feature.csv')
-user_merchant3 = pd.read_csv('data/user_merchant3.csv')
-other_feature3 = pd.read_csv('data/other_feature3.csv')
+coupon3 = pd.read_csv(base_path + 'data/coupon3_feature.csv')
+merchant3 = pd.read_csv(base_path + 'data/merchant3_feature.csv')
+user3 = pd.read_csv(base_path + 'data/user3_feature.csv')
+user_merchant3 = pd.read_csv(base_path + 'data/user_merchant3.csv')
+other_feature3 = pd.read_csv(base_path + 'data/other_feature3.csv')
 dataset3 = pd.merge(coupon3, merchant3, on='merchant_id', how='left')
 dataset3 = pd.merge(dataset3, user3, on='user_id', how='left')
 dataset3 = pd.merge(dataset3, user_merchant3, on=['user_id', 'merchant_id'], how='left')
@@ -1051,13 +1054,13 @@ weekday_dummies.columns = ['weekday' + str(i + 1) for i in range(weekday_dummies
 dataset3 = pd.concat([dataset3, weekday_dummies], axis=1)
 dataset3.drop(['merchant_id', 'day_of_week', 'coupon_count'], axis=1, inplace=True)
 dataset3 = dataset3.replace('null', np.nan)
-dataset3.to_csv('data/dataset3.csv', index=None)
+dataset3.to_csv(base_path + 'data/dataset3.csv', index=None)
 
-coupon2 = pd.read_csv('data/coupon2_feature.csv')
-merchant2 = pd.read_csv('data/merchant2_feature.csv')
-user2 = pd.read_csv('data/user2_feature.csv')
-user_merchant2 = pd.read_csv('data/user_merchant2.csv')
-other_feature2 = pd.read_csv('data/other_feature2.csv')
+coupon2 = pd.read_csv(base_path + 'data/coupon2_feature.csv')
+merchant2 = pd.read_csv(base_path + 'data/merchant2_feature.csv')
+user2 = pd.read_csv(base_path + 'data/user2_feature.csv')
+user_merchant2 = pd.read_csv(base_path + 'data/user_merchant2.csv')
+other_feature2 = pd.read_csv(base_path + 'data/other_feature2.csv')
 dataset2 = pd.merge(coupon2, merchant2, on='merchant_id', how='left')
 dataset2 = pd.merge(dataset2, user2, on='user_id', how='left')
 dataset2 = pd.merge(dataset2, user_merchant2, on=['user_id', 'merchant_id'], how='left')
@@ -1077,13 +1080,13 @@ dataset2.label = dataset2.label.apply(get_label)
 dataset2.drop(['merchant_id', 'day_of_week', 'date', 'date_received', 'coupon_id', 'coupon_count'], axis=1,
               inplace=True)
 dataset2 = dataset2.replace('null', np.nan)
-dataset2.to_csv('data/dataset2.csv', index=None)
+dataset2.to_csv(base_path + 'data/dataset2.csv', index=None)
 
-coupon1 = pd.read_csv('data/coupon1_feature.csv')
-merchant1 = pd.read_csv('data/merchant1_feature.csv')
-user1 = pd.read_csv('data/user1_feature.csv')
-user_merchant1 = pd.read_csv('data/user_merchant1.csv')
-other_feature1 = pd.read_csv('data/other_feature1.csv')
+coupon1 = pd.read_csv(base_path + 'data/coupon1_feature.csv')
+merchant1 = pd.read_csv(base_path + 'data/merchant1_feature.csv')
+user1 = pd.read_csv(base_path + 'data/user1_feature.csv')
+user_merchant1 = pd.read_csv(base_path + 'data/user_merchant1.csv')
+other_feature1 = pd.read_csv(base_path + 'data/other_feature1.csv')
 dataset1 = pd.merge(coupon1, merchant1, on='merchant_id', how='left')
 dataset1 = pd.merge(dataset1, user1, on='user_id', how='left')
 dataset1 = pd.merge(dataset1, user_merchant1, on=['user_id', 'merchant_id'], how='left')
@@ -1103,4 +1106,4 @@ dataset1.label = dataset1.label.apply(get_label)
 dataset1.drop(['merchant_id', 'day_of_week', 'date', 'date_received', 'coupon_id', 'coupon_count'], axis=1,
               inplace=True)
 dataset1 = dataset1.replace('null', np.nan)
-dataset1.to_csv('data/dataset1.csv', index=None)
+dataset1.to_csv(base_path + 'data/dataset1.csv', index=None)

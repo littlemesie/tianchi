@@ -107,3 +107,4 @@ data/
 store/
 .pkl
 .DS_Store
+.csv
