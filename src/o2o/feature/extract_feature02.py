@@ -87,6 +87,7 @@ feature1 = off_train[(off_train.date >= '20160101') & (off_train.date <= '201604
 # for dataset3
 t = dataset3[['user_id']]
 t['this_month_user_receive_all_coupon_count'] = 1
+# agg：可以对groupby的结果，同时应用多个函数；可以对groupby的结果更正列名。
 t = t.groupby('user_id').agg('sum').reset_index()
 
 t1 = dataset3[['user_id', 'coupon_id']]
