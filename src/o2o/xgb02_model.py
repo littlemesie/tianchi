@@ -57,10 +57,19 @@ params = {'booster': 'gbtree',
 
 watchlist = [(dataset1, 'train')]
 model = xgb.train(params, dataset12, num_boost_round=100, evals=watchlist)
-prob = np.array(model.predict(xgb.DMatrix(dataset2_x)))
-fpr, tpr, thresholds = roc_curve(np.array(dataset2_y), prob)
-aucs = auc(fpr, tpr)
-print(aucs)
+prob = np.array(model.predict(dataset3))
+# prob = np.around(prob,decimals=1)
+# np.set_printoptions(precision=1)
+prob = ["%.1f" % p if p > 0 else 0.0 for p in prob]
+# prob[prob < 0] = 0
+print(prob)
+
+d = dataset3_preds
+d['pro'] = prob
+d.to_csv(base_path + 'submission.csv', index=None)
+# fpr, tpr, thresholds = roc_curve(np.array(dataset2_y), prob)
+# aucs = auc(fpr, tpr)
+# print(aucs)
 # predict test set
 # dataset3_preds['label'] = model.predict(dataset3)
 # dataset3_preds.label = MinMaxScaler().fit_transform(dataset3_preds.label.reshape(-1, 1))
