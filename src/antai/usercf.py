@@ -5,7 +5,7 @@ import math
 from operator import itemgetter
 import sys
 from antai.utils import load_file, save_file
-from util import movielen_reader
+from antai import process_data
 
 
 
@@ -78,8 +78,9 @@ class UserCF(object):
             @return: 商品字典 {商品 : 相似性打分情况}
         """
         related_items = self.train_data.get(user, set)
+
         recommmens = dict()
-        for v, sim in sorted(self.user_sim_matrix.get(user, dict).items(),
+        for v, sim in sorted(self.user_sim_matrix.get(user, dict()).items(),
                              key=itemgetter(1), reverse=True)[:K]:
             for item in self.train_data[v]:
                 if item in related_items:
@@ -140,11 +141,13 @@ class UserCF(object):
 
 
 if __name__ == '__main__':
-    trainset, testset = movielen_reader.read_rating_data(train_rate=0.8)
+    trainset, testset = process_data.read_rating_data(train_rate=1)
     user_cf = UserCF()
     users, tests, tests_ratings = user_cf.init_test(testset)
+    print(users)
     # 开始训练
     user_cf.train(trainset)
-    item_recommends, recommends = user_cf.recommend_users(users, 10, 10)
-    records = user_cf.test_recommend_records(tests_ratings, recommends)
+    # item_recommends, recommends = user_cf.recommend_users(users, 10, 10)
+    # # records = user_cf.test_recommend_records(tests_ratings, recommends)
+    # print(item_recommends)
 

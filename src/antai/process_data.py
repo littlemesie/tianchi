@@ -18,7 +18,7 @@ def loadfile(filename):
             yield line
 
 
-def read_rating_data(path=base_path + "train_test.csv", train_rate=1., seed=1):
+def read_rating_data(path=base_path + "Antai_AE_round1_train_20190625.csv", train_rate=1., seed=1):
 
     """
     载入评分数据
