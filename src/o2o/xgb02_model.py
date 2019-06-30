@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import numpy as np
+from sklearn.metrics import auc, roc_curve
 import xgboost as xgb
 from sklearn.preprocessing import MinMaxScaler
 base_path = os.path.dirname(os.path.abspath(__file__)) + "/../../data/o2o/"
@@ -53,15 +55,27 @@ params = {'booster': 'gbtree',
 # watchlist = [(dataset1,'train'),(dataset2,'val')]
 # model = xgb.train(params,dataset1,num_boost_round=3000,evals=watchlist,early_stopping_rounds=300)
 
-watchlist = [(dataset12, 'train')]
-model = xgb.train(params, dataset12, num_boost_round=3500, evals=watchlist)
+watchlist = [(dataset1, 'train')]
+model = xgb.train(params, dataset12, num_boost_round=100, evals=watchlist)
+prob = np.array(model.predict(dataset3))
+# prob = np.around(prob,decimals=1)
+# np.set_printoptions(precision=1)
+prob = ["%.1f" % p if p > 0 else 0.0 for p in prob]
+# prob[prob < 0] = 0
+print(prob)
 
+d = dataset3_preds
+d['pro'] = prob
+d.to_csv(base_path + 'submission.csv', index=None)
+# fpr, tpr, thresholds = roc_curve(np.array(dataset2_y), prob)
+# aucs = auc(fpr, tpr)
+# print(aucs)
 # predict test set
-dataset3_preds['label'] = model.predict(dataset3)
-dataset3_preds.label = MinMaxScaler().fit_transform(dataset3_preds.label.reshape(-1, 1))
-dataset3_preds.sort_values(by=['coupon_id', 'label'], inplace=True)
+# dataset3_preds['label'] = model.predict(dataset3)
+# dataset3_preds.label = MinMaxScaler().fit_transform(dataset3_preds.label.reshape(-1, 1))
+# dataset3_preds.sort_values(by=['coupon_id', 'label'], inplace=True)
 # dataset3_preds.to_csv("xgb_preds.csv", index=None, header=None)
-print(dataset3_preds.describe())
+# print(dataset3_preds.describe())
 
 # save feature score
 # feature_score = model.get_fscore()
