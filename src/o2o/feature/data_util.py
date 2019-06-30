@@ -30,12 +30,8 @@ def split_data(df):
     return train_data, valid_data
 
 def load_test():
-    pd_train = pd.read_csv(base_path + 'test.csv', keep_default_na=False)
-    pd_train.columns = ['user_id', 'merchant_id', 'coupon_id', 'discount_rate', 'distance', 'date_received', 'date']
-    t = pd_train[['user_id']]
-    t['this_month_user_receive_all_coupon_count'] = 1
-    t = t.groupby('user_id').agg('sum').reset_index()
-    print(pd_train.date > '20160516')
+    pd_test = pd.read_csv(base_path + 'test.csv', keep_default_na=False)
+    return pd_test
 
 if __name__ == '__main__':
     load_test()
