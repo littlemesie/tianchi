@@ -4,6 +4,7 @@ from collections import defaultdict
 import math
 from operator import itemgetter
 import sys
+sys.path.extend(['/Users/t/python/tianchi', '/Users/t/python/tianchi/src'])
 from antai.utils import load_file, save_file
 from antai import process_data
 
@@ -47,6 +48,7 @@ class UserCF(object):
         # 建立用户倒排表
         item_user = dict()
         for user, items in self.train_data.items():
+            print('user:' + str(user))
             for item in items:
                 item_user.setdefault(item, set())
                 item_user[item].add(user)
@@ -55,6 +57,7 @@ class UserCF(object):
         user_sim_matrix = dict()
         N = defaultdict(int)  # 记录用户购买商品数
         for item, users in item_user.items():
+            print('item:' + str(item))
             for u in users:
                 N[u] += 1
                 for v in users:
