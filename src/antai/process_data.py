@@ -19,7 +19,7 @@ def load_file(filename):
             yield line
 
 
-def read_rating_data(path=base_path + "train_test.csv", train_rate=1., seed=1):
+def read_rating_data(path, train_rate=1., seed=1):
 
     """
     载入评分数据
@@ -32,10 +32,11 @@ def read_rating_data(path=base_path + "train_test.csv", train_rate=1., seed=1):
     random.seed(seed)
     for line in load_file(filename=path):
         arr = line.split(',')
-        if random.random() < train_rate:
-            trainset.append([int(arr[1]), int(arr[2]), int(1)])
-        else:
-            testset.append([int(arr[1]), int(arr[2]), int(1)])
+        if arr[0] == 'yy':
+            if random.random() < train_rate:
+                trainset.append([int(arr[1]), int(arr[2]), int(1)])
+            else:
+                testset.append([int(arr[1]), int(arr[2]), int(1)])
     return trainset, testset
 
 def item_load_data():
@@ -56,7 +57,25 @@ def item_load_data():
     print(len(store_id_count))
     print(len(item_price_count))
 
+def train_load_data():
+    """
+    总数量:
+        buyer_admin_id:653593
+        # xx buyer_admin_id:551246
+        yy buyer_admin_id:102446
+        yy item_id: 720556
+    """
+    trian_data = pd.read_csv(base_path + "Antai_AE_round1_train_20190625.csv", keep_default_na=False)
+    temp = trian_data.loc[trian_data.buyer_country_id == 'yy']
+    user_id_count = temp['buyer_admin_id'].unique()
+    item_id_count = temp['item_id'].unique()
+    print(len(user_id_count))
+    print(len(item_id_count))
+
+def test_load_data():
+    test_data = pd.read_csv(base_path + "Antai_AE_round1_test_20190625.csv", keep_default_na=False)
+
 if __name__ == '__main__':
     # trainset, testset = read_rating_data()
     # print(trainset)
-    item_load_data()
+    train_load_data()
