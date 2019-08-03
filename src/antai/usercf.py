@@ -145,8 +145,8 @@ class UserCF(object):
 
 if __name__ == '__main__':
     base_path = "/Volumes/d/antai/"
-    train_path = base_path + "Antai_AE_round1_train_20190625.csv"
-    test_path = base_path + "Antai_AE_round1_test_20190625.csv"
+    train_path = base_path + "Antai_AE_round1_train_20190626.csv"
+    test_path = base_path + "Antai_AE_round1_test_20190626.csv"
     trainset, _ = process_data.read_rating_data(train_path, train_rate=1)
     testset, _ = process_data.read_rating_data(test_path, train_rate=1)
     data = trainset + testset
@@ -155,21 +155,23 @@ if __name__ == '__main__':
     # print(users)
     # # 开始训练
     user_cf.train(data)
-    item_recommends, recommends = user_cf.recommend_users(users, 200, 30)
+    popular_items = process_data.get_popular_items()
+    item_recommends, recommends = user_cf.recommend_users(users, 30, 1000)
     with open('submission.csv', 'w') as f:
         for user, items in item_recommends.items():
-            if not items:
-                print(user)
-                print(items)
-            ret = ''
+            if len(items) < 30:
+                for p_item in popular_items:
+                    if p_item not in items:
+                        items.append(p_item)
+                    if len(items) == 30:
+                        break
             ret = str(user) + ','
             for i, item in enumerate(items):
+
                 if i == 29:
                     ret = ret + str(item)
                 else:
                     ret = ret + str(item) + ','
             f.write(ret + '\n')
-
-    # # records = user_cf.test_recommend_records(tests_ratings, recommends)
 
 

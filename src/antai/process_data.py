@@ -75,6 +75,24 @@ def train_load_data():
 def test_load_data():
     test_data = pd.read_csv(base_path + "Antai_AE_round1_test_20190625.csv", keep_default_na=False)
 
+
+def get_popular_items():
+    """获取高频item"""
+    item = pd.read_csv(base_path + 'Antai_AE_round1_item_attr_20190626.csv')
+    # submit = pd.read_csv(path + 'Antai_AE_round1_submit_20190715.csv', header=None)
+    # test = pd.read_csv(path + 'Antai_AE_round1_test_20190626.csv')
+    train = pd.read_csv(base_path + 'Antai_AE_round1_train_20190626.csv')
+
+
+    # 高频item_id
+    temp = train.loc[train.buyer_country_id == 'yy']
+    temp = temp.drop_duplicates(subset=['buyer_admin_id', 'item_id'], keep='first')
+    item_cnts = temp.groupby(['item_id']).size().reset_index()
+    item_cnts.columns = ['item_id', 'cnts']
+    item_cnts = item_cnts.sort_values('cnts', ascending=False)
+    items = item_cnts['item_id'].values.tolist()
+    return items
+
 if __name__ == '__main__':
     # trainset, testset = read_rating_data()
     # print(trainset)
