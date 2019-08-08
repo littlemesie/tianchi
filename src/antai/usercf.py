@@ -1,5 +1,6 @@
 # ! /usr/bin/python3
 # coding=utf-8
+import pandas as pd
 from collections import defaultdict
 import math
 from operator import itemgetter
@@ -80,14 +81,14 @@ class UserCF(object):
             @param K:    查找最相似的用户个数
             @return: 商品字典 {商品 : 相似性打分情况}
         """
-        related_items = self.train_data.get(user, set)
+        # related_items = self.train_data.get(user, set)
 
         recommmens = dict()
         for v, sim in sorted(self.user_sim_matrix.get(user, dict()).items(),
                              key=itemgetter(1), reverse=True)[:K]:
             for item in self.train_data[v]:
-                if item in related_items:
-                    continue
+                # if item in related_items:
+                #     continue
                 recommmens.setdefault(item, 0.)
                 recommmens[item] += sim
 
@@ -109,6 +110,52 @@ class UserCF(object):
             recommends[user] = user_recommends
 
         return item_recommends, recommends
+
+    def recommend_users_xgb(self, users, N, K):
+        """推荐测试集
+            @param users:    用户list
+            @param N:    推荐的商品个数
+            @param K:    查找最相似的用户个数
+            @return: 推荐商品字典 {用户 : 推荐的商品的list}, 推荐字典 {用户 : 商品字典 {商品 : 相似性打分情况}}
+        """
+        xgb_score = pd.read_csv(base_path + 'result.csv')
+        recommends = dict()
+        print('user:' + str(len(users)))
+        for user in users:
+            recommends_score = dict()
+            for v, sim in sorted(self.user_sim_matrix.get(user, dict()).items(), key=itemgetter(1), reverse=True)[:K]:
+                for item in self.train_data[v]:
+                    score = xgb_score.loc[xgb_score.item_id == item]
+                    if score.empty:
+                        continue
+                    recommends_score.setdefault(item, 0.)
+                    recommends_score[item] = score['prob'].values[0]
+            # print(recommends_score)
+            print(user)
+            topN = dict(sorted(recommends_score.items(), key=itemgetter(1), reverse=True)[: N])
+            recommends[user] = list(topN.keys())
+
+        return recommends
+
+
+    def init_test(self, origin_data):
+        """
+        初始化测试数据集
+        users:用户集合
+        items: {user_id: item}
+        ratings {user: {item: rating}}
+        """
+        users = set()
+        items = dict()
+        ratings = dict()
+        for user, item, rating in origin_data:
+            users.add(user)
+            items.setdefault(user, set())
+            items[user].add(item)
+
+            ratings.setdefault(user, dict())
+            ratings[user].update({item: rating})
+        return users, items, ratings
 
     def init_test(self, origin_data):
         """
@@ -156,7 +203,8 @@ if __name__ == '__main__':
     # # 开始训练
     user_cf.train(data)
     popular_items = process_data.get_popular_items()
-    item_recommends, recommends = user_cf.recommend_users(users, 30, 1000)
+    # item_recommends, recommends = user_cf.recommend_users(users, 30, 1000)
+    item_recommends = user_cf.recommend_users_xgb(users, 30, 10)
     with open('submission.csv', 'w') as f:
         for user, items in item_recommends.items():
             if len(items) < 30:
@@ -173,5 +221,3 @@ if __name__ == '__main__':
                 else:
                     ret = ret + str(item) + ','
             f.write(ret + '\n')
-
-
