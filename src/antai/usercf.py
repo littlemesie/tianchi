@@ -94,6 +94,26 @@ class UserCF(object):
 
         return dict(sorted(recommmens.items(), key=itemgetter(1), reverse=True)[: N])
 
+    def recommend_v2(self, user, N, K, items):
+        """推荐
+            @param user:   用户
+            @param N:    推荐的商品个数
+            @param K:    查找最相似的用户个数
+            @return: 商品字典 {商品 : 相似性打分情况}
+        """
+        # related_items = self.train_data.get(user, set)
+
+        recommmens = dict()
+        for v, sim in sorted(self.user_sim_matrix.get(user, dict()).items(),
+                             key=itemgetter(1), reverse=True)[:K]:
+            for item in self.train_data[v]:
+                if item in items:
+                    continue
+                recommmens.setdefault(item, 0.)
+                recommmens[item] += sim
+
+        return dict(sorted(recommmens.items(), key=itemgetter(1), reverse=True)[: N])
+
     def recommend_users(self, users, N, K):
         """推荐测试集
             @param users:    用户list
@@ -110,6 +130,26 @@ class UserCF(object):
             recommends[user] = user_recommends
 
         return item_recommends, recommends
+
+    def recommend_users_v2(self, test_data, N, K):
+        """推荐测试集
+            @param test_data:   测试数据
+            @param N:    推荐的商品个数
+            @param K:    查找最相似的用户个数
+            @return: 推荐商品字典 {用户 : 推荐的商品的list}, 推荐字典 {用户 : 商品字典 {商品 : 相似性打分情况}}
+        """
+        item_recommends = dict()
+        for user, item, rating in test_data:
+            item_recommends.setdefault(user, [])
+            item_recommends[user].append(item)
+            if len(item_recommends[user]) < N:
+                N1 = N - len(item_recommends[user])
+                recommends = self.recommend_v2(user, N1, K, item_recommends[user])
+
+                item_recommends[user] = list(item_recommends[user]) + list(recommends.keys())
+
+
+        return item_recommends
 
     def recommend_users_xgb(self, users, N, K):
         """推荐测试集
@@ -189,6 +229,15 @@ class UserCF(object):
                     records.append([user, item, tests[user][item], recommends[user][item]])
         return records
 
+    def popular_recommend(self, test_data):
+        item_recommends = dict()
+        for user, item, rating in test_data:
+            item_recommends.setdefault(user, [])
+            item_recommends[user].append(item)
+
+        return item_recommends
+
+
 
 if __name__ == '__main__':
     base_path = "/Volumes/d/antai/"
@@ -198,13 +247,15 @@ if __name__ == '__main__':
     testset, _ = process_data.read_rating_data(test_path, train_rate=1)
     data = trainset + testset
     user_cf = UserCF()
-    users, tests, tests_ratings = user_cf.init_test(testset)
+    # users, tests, tests_ratings = user_cf.init_test(testset)
     # print(users)
     # # 开始训练
     user_cf.train(data)
     popular_items = process_data.get_popular_items()
     # item_recommends, recommends = user_cf.recommend_users(users, 30, 1000)
-    item_recommends = user_cf.recommend_users_xgb(users, 30, 10)
+    # item_recommends = user_cf.recommend_users_xgb(users, 30, 10)
+    # item_recommends = user_cf.recommend_users_v2(testset, 30, 1000)
+    item_recommends = user_cf.popular_recommend(testset)
     with open('submission.csv', 'w') as f:
         for user, items in item_recommends.items():
             if len(items) < 30:
@@ -213,7 +264,10 @@ if __name__ == '__main__':
                         items.append(p_item)
                     if len(items) == 30:
                         break
+            else:
+                items = items[:30]
             ret = str(user) + ','
+            print(len(items))
             for i, item in enumerate(items):
 
                 if i == 29:
