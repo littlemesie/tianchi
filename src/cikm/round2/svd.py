@@ -75,12 +75,13 @@ def recommend(u_index, prediction, train_data_matrix):
 
 
 if __name__ == "__main__":
-    n_users, n_items, data_matrix, item_popular = load_data()
+    data_matrix = np.ones((854976, 1352048))
     # 计算稀疏矩阵的最大k个奇异值/向量
-    # u, s, vt = svds(data_matrix, k=15)
-    # s_diag_matrix = np.diag(s)
-    # svd_prediction = np.dot(np.dot(u, s_diag_matrix), vt)
-    # print("svd-shape:", np.shape(svd_prediction))
+    u, s, vt = svds(data_matrix, k=1)
+    s_diag_matrix = np.diag(s)
+    svd_prediction = np.dot(np.dot(u, s_diag_matrix), vt)
+    print("svd-shape:", np.shape(svd_prediction))
     # evaluate(svd_prediction, item_popular, 'svd', data_matrix)
     # # 推荐结果
     # recommend(1, svd_prediction, data_matrix)
+
